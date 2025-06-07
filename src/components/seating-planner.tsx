@@ -102,7 +102,6 @@ export default function SeatingPlanner() {
     x: 0,
     y: 0,
   });
-  const [newGuestName, setNewGuestName] = useState("");
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -273,7 +272,7 @@ export default function SeatingPlanner() {
   };
 
   // Funciones para manejar el arrastre de mesas
-  const handleTableMouseDown = (e: React.MouseEvent, tableId: string) => {
+  const handleTableMouseDown = (_: React.MouseEvent, tableId: string) => {
     // Solo permitir arrastrar mesa si no se está arrastrando un asiento
     if (!draggedSeat) {
       setDraggedTable(tableId);
@@ -288,10 +287,6 @@ export default function SeatingPlanner() {
 
       updateTable(draggedTable, { x: x - 60, y: y - 40 });
     }
-  };
-
-  const handleMouseUp = () => {
-    setDraggedTable(null);
   };
 
   // Funciones para manejar el arrastre de asientos
@@ -388,30 +383,34 @@ export default function SeatingPlanner() {
     const seatOffset = 8; // Distancia de la mesa al asiento
 
     switch (seat.side) {
-      case "top":
+      case "top": {
         const topSpacing = table.width / (table.seatsPerSide.top + 1);
         return {
           x: table.x + topSpacing * (seat.position + 1) - seatSize / 2,
           y: table.y - seatSize - seatOffset,
         };
-      case "bottom":
+      }
+      case "bottom": {
         const bottomSpacing = table.width / (table.seatsPerSide.bottom + 1);
         return {
           x: table.x + bottomSpacing * (seat.position + 1) - seatSize / 2,
           y: table.y + table.height + seatOffset,
         };
-      case "left":
+      }
+      case "left": {
         const leftSpacing = table.height / (table.seatsPerSide.left + 1);
         return {
           x: table.x - seatSize - seatOffset,
           y: table.y + leftSpacing * (seat.position + 1) - seatSize / 2,
         };
-      case "right":
+      }
+      case "right": {
         const rightSpacing = table.height / (table.seatsPerSide.right + 1);
         return {
           x: table.x + table.width + seatOffset,
           y: table.y + rightSpacing * (seat.position + 1) - seatSize / 2,
         };
+      }
       default:
         return { x: 0, y: 0 };
     }
@@ -489,7 +488,7 @@ export default function SeatingPlanner() {
     } catch (error) {
       toast({
         title: "Export error",
-        description: "Layout could not be exported",
+        description: "Layout could not be exported: " + error,
         variant: "destructive",
       });
     }
@@ -512,7 +511,7 @@ export default function SeatingPlanner() {
       } catch (error) {
         toast({
           title: "Import error",
-          description: "The file has an invalid format",
+          description: "The file has an invalid format. Error: " + error,
           variant: "destructive",
         });
       }
@@ -920,6 +919,57 @@ export default function SeatingPlanner() {
           )}
         </div>
       </div>
+      {(selectedSeat || selectedTable) && (
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t shadow p-4 z-50 flex justify-between items-center">
+          <div>
+            {selectedSeat ? (
+              <div>
+                <h2 className="font-bold text-lg">🎯 Selected Guest</h2>
+                <p>
+                  <strong>Name:</strong> {selectedSeat.name || "Unnamed"}
+                </p>
+                <p>
+                  <strong>Side:</strong> {selectedSeat.side}
+                </p>
+                <p>
+                  <strong>Position:</strong> {selectedSeat.position + 1}
+                </p>
+                <p>
+                  <strong>Table:</strong>{" "}
+                  {tables.find((t) =>
+                    t.seats.some((s) => s.id === selectedSeat.id)
+                  )?.name || "-"}
+                </p>
+              </div>
+            ) : selectedTable ? (
+              <div>
+                <h2 className="font-bold text-lg">🪑 Selected Table</h2>
+                <p>
+                  <strong>Name:</strong> {selectedTable.name}
+                </p>
+                <p>
+                  <strong>Position:</strong> ({selectedTable.x},{" "}
+                  {selectedTable.y})
+                </p>
+                <p>
+                  <strong>Seats:</strong>{" "}
+                  {selectedTable.seats.filter((s) => s.name.trim()).length} /{" "}
+                  {selectedTable.seats.length}
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedSeat(null);
+              setSelectedTable(null);
+            }}
+          >
+            Close
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
